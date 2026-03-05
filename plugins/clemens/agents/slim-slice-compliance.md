@@ -91,7 +91,13 @@ ZÄHLE: Anzahl ACs
 ```
 PRÜFE: Existiert "## Test Skeletons" Section?
 PRÜFE: Enthält <test_spec> Block?
-PRÜFE: Enthält mindestens ein it.todo() oder it()?
+PRÜFE: Enthält mindestens ein stack-angemessenes Test-Skeleton-Pattern:
+  - JS/TS:       it.todo( / it( / describe(
+  - PHP/Pest:    test( / it( / ->todo()
+  - PHP/PHPUnit: public function test_ / @test / markTestIncomplete
+  - Python:      def test_ / @pytest.mark
+  - Go:          func Test / t.Skip( / t.Run(
+  - Rust:        #[test] / #[ignore] / fn test_
 ZÄHLE: Anzahl Test-Cases
 PRÜFE: Anzahl Test-Cases >= Anzahl ACs?
 ```

@@ -59,25 +59,31 @@ Fokus auf WAS (ACs, Tests, Contracts), nicht WIE (kein Code).
 
 ## Test Skeletons
 
-> **Für den Test-Writer-Agent:** Jedes `it.todo()` referenziert ein AC.
+> **Für den Test-Writer-Agent:** Jedes Test-Skeleton referenziert ein AC.
 > Der Test-Writer implementiert die Assertions selbstständig.
+> **Syntax:** Automatisch an den erkannten Stack anpassen (siehe Test-Strategy).
 
 ### Test-Datei: `{test file path}`
 
 <test_spec>
-```typescript
-import { describe, it } from 'vitest'
+```{stack-appropriate language}
+// Syntax MUSS zum erkannten Stack passen:
+//
+// TypeScript/Vitest:    it.todo('should ...')
+// PHP/Pest:             test('...')->todo()  oder  it('...')->todo()
+// PHP/PHPUnit:          public function test_*(): void { $this->markTestIncomplete('AC-N'); }
+// Python/pytest:        @pytest.mark.skip(reason='AC-N') def test_*(): ...
+// Go:                   func Test*(t *testing.T) { t.Skip("AC-N") }
+// Rust:                 #[test] #[ignore] fn test_*() {}
 
-describe('{Slice Name}', () => {
-  // AC-1: {AC-Titel}
-  it.todo('should {erwartetes Verhalten aus AC-1}')
+// AC-1: {AC-Titel}
+{stack-appropriate test skeleton referencing AC-1}
 
-  // AC-2: {AC-Titel}
-  it.todo('should {erwartetes Verhalten aus AC-2}')
+// AC-2: {AC-Titel}
+{stack-appropriate test skeleton referencing AC-2}
 
-  // AC-N: {AC-Titel}
-  it.todo('should {erwartetes Verhalten aus AC-N}')
-})
+// AC-N: {AC-Titel}
+{stack-appropriate test skeleton referencing AC-N}
 ```
 </test_spec>
 
@@ -132,5 +138,5 @@ describe('{Slice Name}', () => {
 - **Kein Code** — der Implementer schreibt Code, nicht der Planner
 - **Keine Wireframe-Kopien** — Referenz auf wireframes.md Section genügt
 - **Keine Architecture-Kopien** — Referenz auf architecture.md Section genügt
-- **Tests als Skeletons** — `it.todo()` mit AC-Referenz, Test-Writer implementiert
+- **Tests als Skeletons** — Stack-angemessene Skeletons mit AC-Referenz, Test-Writer implementiert
 - **ACs sind der Vertrag** — konkrete Werte, messbar, testbar

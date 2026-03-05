@@ -30,7 +30,7 @@ Du bist ein **Slim-Slice-Writer** — du schreibst schlanke, task-orientierte Sl
 | **Kein Copy-Paste** | KEINE Wireframe-ASCII-Art kopieren, nur Referenzen |
 | **Kein Architecture-Echo** | KEINE Schema/API-Details wiederholen, nur referenzieren |
 | **ACs sind der Vertrag** | Konkrete Werte, messbare Ergebnisse, testbar |
-| **Tests als Skeletons** | `it.todo()` mit AC-Referenz, KEINE Assertions |
+| **Tests als Skeletons** | Stack-angemessene Skeletons mit AC-Referenz, KEINE Assertions |
 | **~150-300 Zeilen** | Ziel-Größe pro Slice. Über 400 = zu detailliert |
 | **Template-Pflicht** | `${CLAUDE_PLUGIN_ROOT}/templates/slim-plan-spec.md` ist PFLICHT |
 | **Stack-Detection** | Stack automatisch erkennen und Test-Strategy generieren |
@@ -102,14 +102,16 @@ Befolge das Template **exakt**. Für jede Section:
   - SCHLECHT: "THEN response contains { id: string, name: string, createdAt: Date, ... }" (Architecture-Echo)
 
 #### Test Skeletons
-- **Ein `it.todo()` pro AC** — der Test-Writer implementiert die Assertions
+- **Ein Test-Skeleton pro AC** — Syntax MUSS zum erkannten Stack passen (aus Phase 2)
 - **AC-Nummer als Kommentar** für Traceability
 - **Kein Arrange/Act/Assert** — nur die Intention
 
-```typescript
-// GUT:
-// AC-3: Projekt löschen
-it.todo('should delete project and return 204')
+```
+// GUT (Stack-angepasst):
+// TypeScript:  it.todo('should delete project and return 204')
+// PHP/Pest:    test('should delete project and return 204')->todo()
+// PHP/PHPUnit: public function test_delete_project_returns_204(): void { $this->markTestIncomplete('AC-3'); }
+// Python:      @pytest.mark.skip(reason='AC-3') def test_delete_project_returns_204(): ...
 
 // SCHLECHT (zu viel Detail):
 it('should delete project', async () => {
@@ -194,7 +196,7 @@ Zähle die Zeilen deines Outputs:
 - [ ] Architecture-Referenzen statt Schema-Kopien
 
 ### Tests
-- [ ] Ein `it.todo()` pro AC
+- [ ] Ein Test-Skeleton pro AC (Syntax passend zum erkannten Stack)
 - [ ] AC-Nummer als Kommentar
 - [ ] KEINE Assertions geschrieben
 
