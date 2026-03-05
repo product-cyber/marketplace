@@ -107,10 +107,14 @@ Kategorisiere jedes Finding nach Severity:
 
 | Severity | Definition | Pipeline-Wirkung |
 |----------|-----------|------------------|
-| **CRITICAL** | Blockierende Issues: fehlende Input-Validierung, Security-Luecken, Spec-Abweichung bei Kern-ACs, fehlende Error-Handling fuer kritische Pfade | Pipeline blockiert, Implementer muss fixen |
-| **HIGH** | Empfohlene Fixes: Suboptimale Patterns, fehlende Edge-Case-Behandlung, Performance-Bedenken | Warning geloggt, Pipeline laeuft weiter |
+| **CRITICAL** | Blockierende Issues: (1) Logikfehler — Algorithmus produziert falsches Ergebnis fuer validen Input (z.B. falsche Berechnung, stille Daten-Korruption, Edge-Case der falsche Outputs erzeugt), (2) fehlende Input-Validierung an System-Grenzen, (3) Security-Luecken, (4) Spec-Abweichung bei Kern-ACs, (5) fehlende Error-Handling fuer kritische Pfade | Pipeline blockiert, Implementer muss fixen |
+| **HIGH** | Empfohlene Fixes: Defensive Coding (Null-Safety, Type-Guards), fehlende Robustheit bei unerwarteten Inputs, Performance-Bedenken, suboptimale Patterns | Warning geloggt, Auto-Fix bei CONDITIONAL |
 | **MEDIUM** | Hinweise: Code-Style, bessere Benennungen, Refactoring-Moeglichkeiten | Warning geloggt, Pipeline laeuft weiter |
 | **LOW** | Nit-Picks: Kommentar-Verbesserungen, Formatting (sollte durch Lint abgedeckt sein) | Warning geloggt, Pipeline laeuft weiter |
+
+**WICHTIG — Logikfehler vs. Defensive Coding:**
+- **Logikfehler** (CRITICAL): Code produziert falsches Ergebnis bei VALIDEM Input. Der Input ist korrekt, der Algorithmus ist falsch.
+- **Defensive Coding** (HIGH): Code koennte bei INVALIDEN/unerwarteten Inputs crashen. Der Input ist invalid, der Code ist nicht robust genug.
 
 ### Step 6: JSON zurueckgeben
 

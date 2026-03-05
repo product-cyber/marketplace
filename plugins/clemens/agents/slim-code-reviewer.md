@@ -101,10 +101,14 @@ cd {working_dir} && git diff HEAD~1
 
 | Severity | Definition | Pipeline-Wirkung |
 |----------|-----------|------------------|
-| **CRITICAL** | Blockierend: fehlende Input-Validierung, Security-Lücken, AC nicht erfüllbar, fehlende Error-Handling für kritische Pfade | Pipeline blockiert |
-| **HIGH** | Empfohlen: Suboptimale Patterns, fehlende Edge-Cases, Performance | Warning, Pipeline läuft |
-| **MEDIUM** | Hinweise: Code-Style, bessere Benennungen | Warning, Pipeline läuft |
+| **CRITICAL** | Blockierend: (1) Logikfehler — Algorithmus produziert falsches Ergebnis für validen Input (z.B. falsche Berechnung, stille Daten-Korruption, Edge-Case der falsche Outputs erzeugt), (2) fehlende Input-Validierung an System-Grenzen, (3) Security-Lücken, (4) AC nicht erfüllbar, (5) fehlende Error-Handling für kritische Pfade | Pipeline blockiert (REJECTED) |
+| **HIGH** | Empfohlen: Defensive Coding (Null-Safety, Type-Guards), fehlende Robustheit bei unerwarteten Inputs, Performance-Probleme, suboptimale Patterns | Warning, Auto-Fix bei CONDITIONAL |
+| **MEDIUM** | Hinweise: Code-Style, bessere Benennungen, Inkonsistenzen | Warning, Pipeline läuft |
 | **LOW** | Nit-Picks: Kommentare, Formatting | Warning, Pipeline läuft |
+
+**WICHTIG — Logikfehler vs. Defensive Coding:**
+- **Logikfehler** (CRITICAL): Code produziert falsches Ergebnis bei VALIDEM Input. Beispiel: Recurring Holiday am 29. Feb wird in Nicht-Schaltjahren still zum 1. März → falscher Feiertag. Der Input ist korrekt, der Algorithmus ist falsch.
+- **Defensive Coding** (HIGH): Code könnte bei INVALIDEN/unerwarteten Inputs crashen oder falsch reagieren. Beispiel: parseTimeToMinutes(null) wirft TypeError. Der Input ist invalid, der Code ist nicht robust genug.
 
 ### Step 6: JSON zurückgeben
 
