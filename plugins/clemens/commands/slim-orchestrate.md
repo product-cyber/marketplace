@@ -14,7 +14,7 @@ Du orchestrierst die Implementierung eines Features slice-by-slice mit Sub-Agent
 3. **Kein direktes Bash:** Du führst KEINE Tests direkt aus. ALLES via Sub-Agents. Ausnahme: Deterministic Gate (Lint/TypeCheck) läuft direkt via Bash.
 4. **JSON-Parsing:** Jeder Sub-Agent-Output wird als JSON geparsed (letzter ```json``` Block). Bei Parse-Failure: HARD STOP.
 5. **9 Retries:** Max 9 Debugger-Retries pro Slice, max 3 Code-Review-Retries, max 3 Lint/TypeCheck-Retries. Danach HARD STOP.
-6. **CONDITIONAL + HIGH = Auto-Fix:** Wenn ein Code-Review CONDITIONAL zurückgibt UND HIGH oder CRITICAL Findings enthält, MUSST du einen Auto-Fix-Round pro betroffenem Slice triggern (slim-slice-implementer mit den HIGH/CRITICAL Findings). Erst danach weiter zum nächsten Step. Das gilt auch bei parallelen Reviews innerhalb einer Wave — prüfe JEDES Review-Ergebnis einzeln auf HIGH/CRITICAL Findings. CONDITIONAL ohne HIGH/CRITICAL ist akzeptabel und braucht keinen Fix.
+6. **Code Review ist binär:** APPROVED = weiter, REJECTED = fix. Bei parallelen Reviews: JEDES Ergebnis einzeln prüfen. REJECTED Slices fixen bevor die Wave weitergeht.
 
 **Input:** $ARGUMENTS (Spec-Pfad)
 
@@ -118,7 +118,10 @@ FUNCTION parse_agent_json(agent_output):
 
 ---
 
-## Phase 2b: Stack Detection
+## Phase 2b: Stack Detection (läuft IMMER, auch bei Resume)
+
+**WICHTIG:** Stack Detection wird NICHT im State gecacht. Sie läuft bei jedem Start neu,
+weil sich die Projekt-Tooling zwischen Runs ändern kann (z.B. Pint installiert).
 
 ```
 STACK_INDICATORS = {
@@ -242,38 +245,8 @@ FOR each wave IN waves:
       review_json = parse_agent_json(review_result)
 
       IF review_json.verdict == "APPROVED":
-        OUTPUT: "Code Review: APPROVED (Iteration {review_retries + 1})"
+        OUTPUT: "Code Review: APPROVED"
         BREAK
-
-      IF review_json.verdict == "CONDITIONAL":
-        # Prüfe ob HIGH oder CRITICAL Findings vorliegen
-        high_findings = [f for f in review_json.findings if f.severity in ["CRITICAL", "HIGH"]]
-
-        IF len(high_findings) == 0:
-          OUTPUT: "Code Review: CONDITIONAL (keine HIGH/CRITICAL) — akzeptiert"
-          BREAK
-
-        # CONDITIONAL mit HIGH/CRITICAL → Auto-Fix (zählt NICHT als Retry)
-        OUTPUT: "Code Review: CONDITIONAL mit {len(high_findings)} HIGH/CRITICAL Findings → Auto-Fix..."
-
-        fix_impl_result = Task(
-          subagent_type: "slim-slice-implementer",
-          prompt: "
-            Fixe Code-Review-Findings für {slice_id}.
-            Review-Findings (NUR HIGH/CRITICAL): {high_findings}
-            Slice-Spec: {spec_file}
-            Architecture: {architecture_file}
-            Fixe NUR die HIGH und CRITICAL Findings. MEDIUM/LOW ignorieren.
-            Committe mit: git add -A && git commit -m 'fix({slice_id}): address HIGH code review findings'
-          "
-        )
-        impl_json = parse_agent_json(fix_impl_result)
-        # Nächste Review-Iteration prüft ob der Fix korrekt ist
-        review_retries++
-        IF review_retries >= MAX_REVIEW_RETRIES:
-          OUTPUT: "Code Review: CONDITIONAL HIGH-Fixes nach 3 Versuchen nicht gelöst — akzeptiere CONDITIONAL"
-          BREAK
-        CONTINUE
 
       IF review_json.verdict == "REJECTED":
         review_retries++
@@ -289,7 +262,7 @@ FOR each wave IN waves:
             Review-Findings: {review_json.findings}
             Slice-Spec: {spec_file}
             Architecture: {architecture_file}
-            Fixe NUR die CRITICAL und HIGH Findings.
+            Fixe NUR die BLOCKING Findings.
             Committe mit: git add -A && git commit -m 'fix({slice_id}): address code review findings'
           "
         )

@@ -99,16 +99,12 @@ cd {working_dir} && git diff HEAD~1
 
 ### Step 5: Findings kategorisieren
 
-| Severity | Definition | Pipeline-Wirkung |
-|----------|-----------|------------------|
-| **CRITICAL** | Blockierend: (1) Logikfehler — Algorithmus produziert falsches Ergebnis für validen Input (z.B. falsche Berechnung, stille Daten-Korruption, Edge-Case der falsche Outputs erzeugt), (2) fehlende Input-Validierung an System-Grenzen, (3) Security-Lücken, (4) AC nicht erfüllbar, (5) fehlende Error-Handling für kritische Pfade | Pipeline blockiert (REJECTED) |
-| **HIGH** | Empfohlen: Defensive Coding (Null-Safety, Type-Guards), fehlende Robustheit bei unerwarteten Inputs, Performance-Probleme, suboptimale Patterns | Warning, Auto-Fix bei CONDITIONAL |
-| **MEDIUM** | Hinweise: Code-Style, bessere Benennungen, Inkonsistenzen | Warning, Pipeline läuft |
-| **LOW** | Nit-Picks: Kommentare, Formatting | Warning, Pipeline läuft |
+Jedes Finding ist entweder **BLOCKING** oder **NON-BLOCKING**. Keine Abstufungen.
 
-**WICHTIG — Logikfehler vs. Defensive Coding:**
-- **Logikfehler** (CRITICAL): Code produziert falsches Ergebnis bei VALIDEM Input. Beispiel: Recurring Holiday am 29. Feb wird in Nicht-Schaltjahren still zum 1. März → falscher Feiertag. Der Input ist korrekt, der Algorithmus ist falsch.
-- **Defensive Coding** (HIGH): Code könnte bei INVALIDEN/unerwarteten Inputs crashen oder falsch reagieren. Beispiel: parseTimeToMinutes(null) wirft TypeError. Der Input ist invalid, der Code ist nicht robust genug.
+| Severity | Definition | Verdict-Wirkung |
+|----------|-----------|-----------------|
+| **BLOCKING** | Fehler. (1) AC wird nicht erfüllt, (2) Architecture wird verletzt, (3) Logikfehler — falsches Ergebnis bei validem Input, (4) Security-Lücke | → REJECTED |
+| **NON-BLOCKING** | Hinweis. Defensive Coding, Style, Performance-Vorschläge, Naming, Robustheit-Tipps | → Geloggt, kein Fix |
 
 ### Step 6: JSON zurückgeben
 
@@ -116,20 +112,20 @@ cd {working_dir} && git diff HEAD~1
 
 ## ADVERSARIAL REVIEW RULES
 
-1. **Finde mindestens 3 Issues oder begründe EXPLIZIT warum keine existieren.**
+1. **Finde BLOCKING Issues oder begründe EXPLIZIT warum keine existieren.** NON-BLOCKING Issues optional.
 2. **Du bist ein SKEPTISCHER Reviewer, kein wohlwollender Kollege.**
 3. **Du hast KEINEN Zugriff auf den Implementer-Context.**
-4. **Severity-Zuweisung MUSS begründet sein.**
 
 ---
 
 ## Verdict-Logik
 
-| Condition | Verdict | Pipeline-Aktion |
-|-----------|---------|-----------------|
-| 0 CRITICAL + 0 HIGH | `APPROVED` | Pipeline läuft weiter |
-| 0 CRITICAL + >=1 HIGH | `CONDITIONAL` | Warnings geloggt |
-| >=1 CRITICAL | `REJECTED` | Implementer muss fixen |
+**Binär. Keine Interpretation.**
+
+| Condition | Verdict |
+|-----------|---------|
+| 0 BLOCKING | `APPROVED` |
+| >=1 BLOCKING | `REJECTED` |
 
 ---
 
@@ -139,17 +135,17 @@ Gib NUR dieses JSON zurück:
 
 ```json
 {
-  "verdict": "APPROVED | CONDITIONAL | REJECTED",
+  "verdict": "APPROVED | REJECTED",
   "findings": [
     {
-      "severity": "CRITICAL | HIGH | MEDIUM | LOW",
+      "severity": "BLOCKING | NON-BLOCKING",
       "file": "path/to/file.ts",
       "line": 42,
-      "message": "Missing input validation for user-supplied parameter",
-      "fix_suggestion": "Add zod schema validation before processing"
+      "message": "Recurring holiday on Feb 29 silently becomes March 1 in non-leap years",
+      "fix_suggestion": "Validate that projected date month-day still matches after Carbon::parse"
     }
   ],
-  "summary": "2 CRITICAL, 1 HIGH, 3 MEDIUM issues found"
+  "summary": "1 BLOCKING, 3 NON-BLOCKING issues found"
 }
 ```
 
