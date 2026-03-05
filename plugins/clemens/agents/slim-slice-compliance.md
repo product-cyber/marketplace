@@ -143,6 +143,26 @@ PRÜFE: Kein DB-Schema kopiert (CREATE TABLE, Drizzle pgTable)?
 PRÜFE: Keine vollständigen Type-Definitionen (> 5 Felder in einem interface/type Block)?
 ```
 
+#### D-10: Codebase Reference Check
+
+```
+NUR für Slices mit "MODIFY existing file" Deliverables oder Integration Contract Einträgen:
+
+1. Für jedes Deliverable mit "EXISTING file" oder "MODIFY":
+   - PRÜFE via Glob: Existiert die Datei im Projekt?
+   - PRÜFE via Grep: Enthält die Datei die referenzierten Methoden?
+   - Beispiel: Slice sagt "FixDatesService.php — applyDateRules() erweitern"
+     → Grep nach "function applyDateRules" in der Datei
+
+2. Für jeden Eintrag in "Integration Contract > Requires From Other Slices":
+   - PRÜFE via Grep: Existiert die referenzierte Methode/Klasse im Projekt?
+   - Beispiel: Requires "TimeRulesAdapter::convertToInput()" → Grep nach "function convertToInput"
+   - AUSNAHME: Wenn die Resource von einem VORHERIGEN Slice erstellt wird (neues File), skip
+
+3. Bei Nicht-Match:
+   - FAIL mit: "D-10 FAIL: Methode '{method}' nicht gefunden in '{file}'. Tatsächlich vorhanden: {grep_results}"
+```
+
 ### Phase 2 Verdict
 
 ```
@@ -202,6 +222,27 @@ PRÜFE: Sind relevante UI-States aus discovery.md in ACs reflektiert?
 PRÜFE: Fehlt ein wesentlicher User-Flow-Schritt?
 ```
 
+#### L-6: Consumer Coverage (nur bei "MODIFY existing file" Deliverables)
+
+```
+NUR wenn mindestens ein Deliverable eine BESTEHENDE Datei modifiziert:
+
+1. Identifiziere die modifizierte(n) Methode(n) aus den ACs
+   Beispiel: Slice modifiziert "applyDateRules()" in FixDatesService.php
+
+2. Finde ALLE Aufrufer dieser Methode(n) via Grep im Projekt
+   Beispiel: Grep "applyDateRules(" → FixDatesController, PriceService, OrderDraftService
+
+3. Für JEDEN Aufrufer: Identifiziere das Call-Pattern (welche Methoden auf dem Return-Wert aufgerufen werden)
+   Beispiel: FixDatesController nutzt "->toJson()", PriceService nutzt "->getDates()"
+
+4. Prüfe: Hat JEDES Call-Pattern ein entsprechendes AC?
+   Beispiel: AC-4 deckt toJson() ab ✅, getDates() fehlt ❌
+
+5. Bei fehlender Coverage:
+   FAIL mit: "L-6 FAIL: Aufrufer '{caller}' nutzt Pattern '{pattern}' auf Return von '{method}', aber kein AC deckt dieses Pattern ab"
+```
+
 ---
 
 ## Output Format
@@ -229,6 +270,7 @@ Schreibe `{spec_path}/slices/compliance-slice-{NN}.md`:
 | D-7: Constraints | ✅/❌ | {Detail} |
 | D-8: Größe | ✅/❌ | {N} Zeilen |
 | D-9: Anti-Bloat | ✅/❌ | {Detail} |
+| D-10: Codebase Reference | ✅/❌/SKIP | {Detail oder "Kein MODIFY Deliverable"} |
 
 **Phase 2 Verdict:** PASS / FAIL
 
@@ -245,6 +287,7 @@ Schreibe `{spec_path}/slices/compliance-slice-{NN}.md`:
 | L-3: Contract Konsistenz | ✅/❌ | {Detail} |
 | L-4: Deliverable-Coverage | ✅/❌ | {Detail} |
 | L-5: Discovery Compliance | ✅/❌ | {Detail} |
+| L-6: Consumer Coverage | ✅/❌/SKIP | {Detail oder "Kein MODIFY Deliverable"} |
 
 ---
 

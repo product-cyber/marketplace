@@ -152,6 +152,26 @@ FOR each User-Flow in Discovery "User Flow" / "Transitions":
 | Fehlende Proxy-Route | Backend-Endpoint existiert, Frontend-Proxy-Route fehlt | Frontend-Requests prüfen: gehen sie über den Frontend-Server? |
 | Fehlende Pipeline-Verkettung | Service A ruft Service B nicht auf | DI-Chain und fire-and-forget Tasks prüfen |
 
+#### G) Infrastructure Prerequisite Check
+
+Bevor der orchestrator-config.md geschrieben wird, prüfe ob die referenzierte Runtime-Infrastruktur existiert:
+
+```
+1. Health Endpoint:
+   - Extrahiere den Health Endpoint aus der Stack-Detection (z.B. "http://localhost:8000/api/health")
+   - Grep im Projekt nach der Route-Definition (z.B. "Route::get.*health" für Laravel, "app.get.*health" für Express)
+   - WENN nicht gefunden:
+     → Füge in orchestrator-config.md ein PREREQUISITE ein:
+       "PREREQUISITE: Health endpoint '{endpoint}' muss vor Wave 1 angelegt werden.
+        Vorgeschlagene Implementierung: {1-Zeiler für den erkannten Stack}"
+     → Oder erstelle einen "Slice 00: Infrastructure Prerequisites" im Config
+
+2. Log-Channels (wenn Slices Log-Konfiguration referenzieren):
+   - Grep nach dem Channel-Namen in config/logging.php (Laravel) oder equivalent
+   - WENN nicht gefunden und kein Slice den Channel erstellt:
+     → Warnung in orchestrator-config.md
+```
+
 ### Phase 4: Output generieren
 
 Erstelle drei Dateien:
